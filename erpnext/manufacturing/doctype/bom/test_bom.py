@@ -1814,6 +1814,22 @@ class TestBOM(ERPNextTestSuite):
 		# 1 good unit of the sub-assembly needs 1.25 of the raw material after 20% loss.
 		self.assertEqual([(row.item_code, row.stock_qty) for row in parent.exploded_items], [(rm_item, 1.25)])
 
+	def test_exploded_items_ignore_phantom_process_loss(self):
+		from erpnext.manufacturing.doctype.production_plan.test_production_plan import make_bom
+
+		rm_item = make_item("_Test Phantom Loss RM", {"is_stock_item": 1, "stock_uom": "Kg"}).name
+		phantom_item = make_item("_Test Phantom Loss Phantom", {"is_stock_item": 0, "stock_uom": "Kg"}).name
+		fg_item = make_item("_Test Phantom Loss FG", {"is_stock_item": 1}).name
+		phantom_bom = make_bom(
+			item=phantom_item, raw_materials=[rm_item], process_loss_percentage=20, do_not_save=True
+		)
+		phantom_bom.is_phantom_bom = 1
+		phantom_bom.submit()
+		parent = make_bom(item=fg_item, raw_materials=[phantom_item])
+
+		# A phantom is not made, so its process loss adds no raw material.
+		self.assertEqual([(row.item_code, row.stock_qty) for row in parent.exploded_items], [(rm_item, 1)])
+
 	def test_cancelling_the_default_bom_promotes_another_active_bom(self):
 		from erpnext.manufacturing.doctype.production_plan.test_production_plan import make_bom
 
