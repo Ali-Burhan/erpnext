@@ -1,12 +1,12 @@
 {
   "name": "erpnext",
-  "description": "Open Source ERP System powered by the Frappe Framework",
+  "description": "AB ERP — Open Source Business Management Suite",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/frappe/erpnext.git"
+    "url": "git+https://github.com/Ali-Burhan/erpnext.git"
   },
-  "homepage": "https://frappe.io/erpnext",
-  "author": "Frappe Technologies Pvt. Ltd.",
+  "homepage": "https://github.com/Ali-Burhan/erpnext",
+  "author": "AB Solutions",
   "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/frappe/erpnext/issues"

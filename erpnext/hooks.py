@@ -1,19 +1,19 @@
 app_name = "erpnext"
-app_title = "ERPNext"
-app_publisher = "Frappe Technologies Pvt. Ltd."
-app_description = """ERP made simple"""
+app_title = "AB ERP"
+app_publisher = "AB Solutions"
+app_description = """AB ERP — Business Management Suite"""
 app_icon = "fa fa-th"
-app_color = "#e74c3c"
-app_email = "hello@frappe.io"
+app_color = "#2dd4bf"
+app_email = "hello@absolutions.com"
 app_license = "GNU General Public License (v3)"
-source_link = "https://github.com/frappe/erpnext"
-app_logo_url = "/assets/erpnext/images/erpnext-logo.svg"
+source_link = "https://github.com/Ali-Burhan/erpnext"
+app_logo_url = "/assets/erpnext/images/ab-erp-logo.svg"
 app_home = "/desk/home"
 
 add_to_apps_screen = [
 	{
 		"name": app_name,
-		"logo": "/assets/erpnext/images/erpnext-logo.svg",
+		"logo": "/assets/erpnext/images/ab-erp-logo.svg",
 		"title": app_title,
 		"route": app_home,
 		"setup_wizard_text": "Let's give your business a home.",
