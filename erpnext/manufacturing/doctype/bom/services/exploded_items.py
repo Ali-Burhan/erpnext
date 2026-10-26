@@ -86,12 +86,14 @@ class BOMExplodedItemsService:
 				bom_item.sourced_by_supplier,
 				bom.quantity,
 				bom.process_loss_qty,
+				bom.is_phantom_bom,
 			)
 			.where((bom.name == bom_no) & (bom.docstatus == 1))
 		).run(as_dict=1)
 		for d in items:
-			# Each good unit of the child also covers its process loss.
-			d.qty_consumed_per_unit = flt(d.stock_qty) / get_good_qty(d)
+			# Each good unit of a manufactured child also covers its process loss; a phantom is not made.
+			good_qty = (flt(d.quantity) or 1) if d.is_phantom_bom else get_good_qty(d)
+			d.qty_consumed_per_unit = flt(d.stock_qty) / good_qty
 		return items
 
 	@staticmethod
