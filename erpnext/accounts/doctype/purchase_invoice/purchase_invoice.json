@@ -33,6 +33,7 @@
   "bill_no",
   "column_break_15",
   "bill_date",
+  "invoice_attachment",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -418,6 +419,12 @@
    "oldfieldname": "bill_date",
    "oldfieldtype": "Date",
    "print_hide": 1
+  },
+  {
+   "description": "Attach a PDF or image and use Extract from Invoice to create a draft suggestion.",
+   "fieldname": "invoice_attachment",
+   "fieldtype": "Attach",
+   "label": "Supplier Invoice File"
   },
   {
    "depends_on": "return_against",

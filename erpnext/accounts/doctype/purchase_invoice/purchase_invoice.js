@@ -157,6 +157,24 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 		}
 
 		if (doc.docstatus === 0) {
+			if (!doc.is_return && this.frm.has_perm("write")) {
+				this.frm.add_custom_button(
+					__("Extract from Invoice"),
+					() => this.extract_from_invoice(),
+					__("Get Items From")
+				);
+				this.frm.add_custom_button(
+					__("Extract and Save as Draft"),
+					() => this.extract_from_invoice("draft"),
+					__("Get Items From")
+				);
+				this.frm.add_custom_button(
+					__("Extract and Save (Submit)"),
+					() => this.extract_from_invoice("submit"),
+					__("Get Items From")
+				);
+			}
+
 			this.frm.add_custom_button(
 				__("Purchase Order"),
 				function () {
@@ -245,6 +263,126 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 		}
 
 		erpnext.accounts.unreconcile_payment.add_unreconcile_btn(me.frm);
+	}
+
+	async extract_from_invoice(save_action = "populate") {
+		const frm = this.frm;
+		if (!frm.doc.invoice_attachment) {
+			frappe.msgprint(__("Attach a supplier invoice in the Supplier Invoice section first."));
+			return;
+		}
+
+		let data;
+		frappe.dom.freeze(
+			__("Analyzing with Qwen2:7b. Extraction can take up to about a minute...")
+		);
+		try {
+			data = await frappe.xcall(
+				"erpnext.accounts.doctype.purchase_invoice.ai_purchase_invoice.extract_invoice",
+				{
+					file_url: frm.doc.invoice_attachment,
+					docname: frm.doc.name,
+				}
+			);
+		} finally {
+			frappe.dom.unfreeze();
+		}
+		const apply_extraction = async () => {
+			await this.apply_invoice_extraction(data);
+			if (save_action === "draft") {
+				await frm.save();
+				if (frm.is_dirty()) {
+					return false;
+				}
+			} else if (save_action === "submit") {
+				await frm.save("Submit");
+				if (frm.doc.docstatus !== 1) {
+					return false;
+				}
+			}
+			return true;
+		};
+
+		if (save_action === "populate") {
+			frappe.confirm(
+				__(
+					"Apply the extracted supplier and {0} invoice lines? Existing values may be replaced where extraction succeeded. Tax values are not applied; review the ERPNext-calculated totals before saving.",
+					[data.items.length]
+				),
+				async () => {
+					if (await apply_extraction()) {
+						this.show_invoice_extraction_summary(data, save_action);
+					}
+				}
+			);
+			return;
+		}
+
+		if (await apply_extraction()) {
+			this.show_invoice_extraction_summary(data, save_action);
+		}
+	}
+
+	async apply_invoice_extraction(data) {
+		const frm = this.frm;
+		if (data.supplier || data.supplier_name) {
+			await frm.set_value("supplier", data.supplier || "");
+		}
+		if (data.currency) {
+			await frm.set_value("currency", data.currency);
+		}
+		if (data.invoice_number) {
+			await frm.set_value("bill_no", data.invoice_number);
+		}
+		if (data.invoice_date) {
+			await frm.set_value("bill_date", data.invoice_date);
+		}
+		if (data.due_date) {
+			await frm.set_value("due_date", data.due_date);
+		}
+
+		frm.clear_table("items");
+		for (const item of data.items) {
+			const row = frm.add_child("items");
+			row.item_code = item.item_code || "";
+			if (row.item_code) {
+				await frm.script_manager.trigger("item_code", row.doctype, row.name);
+			}
+			row.description = item.description;
+			row.qty = item.quantity;
+			row.rate = item.unit_price;
+		}
+		frm.refresh_field("items");
+		frm.dirty();
+	}
+
+	show_invoice_extraction_summary(data, save_action) {
+		if (save_action === "submit") {
+			frappe.msgprint(
+				__("Invoice submitted. Extracted invoice total: {0}; tax: {1}.", [
+					data.invoice_total || __("not found"),
+					data.tax_amount || __("not found"),
+				])
+			);
+			return;
+		}
+
+		const items_to_review = data.items.filter(
+			(item) => !item.item_code || !item.quantity || !item.unit_price
+		).length;
+		const result = save_action === "draft" ? __("saved as a draft") : __("added to this draft");
+		frappe.msgprint(
+			__(
+				"Extracted invoice {0}. Review all values; {1} item(s) need a manual match or value check. {2} Compare the invoice total {3} and tax {4} with ERPNext's calculated totals.",
+				[
+					result,
+					items_to_review,
+					data.supplier ? __("The supplier was matched.") : __("Select the supplier manually."),
+					data.invoice_total || __("not found"),
+					data.tax_amount || __("not found"),
+				]
+			)
+		);
 	}
 
 	unblock_invoice() {
