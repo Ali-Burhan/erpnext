@@ -64,8 +64,13 @@ source.
 
 ## Start the application and model
 
-After installation, keep the ERPNext terminal window open. To start the services
-manually later, run:
+The installer creates a **Start AB ERP AI Demo** shortcut on the Windows Desktop.
+After restarting the laptop, double-click that shortcut to start Ollama and ERPNext
+again. Keep its terminal window open while using the app; closing it or pressing
+Ctrl+C stops Bench. The app does not automatically start at Windows sign-in, so it
+won't load the model or use resources until the shortcut is clicked.
+
+To start the services manually instead, run:
 
 ```powershell
 wsl -d Ubuntu-24.04 -u frappe -- bash -lc 'cd ~/erpnext/frappe-bench && ./start-ai-erpnext.sh'

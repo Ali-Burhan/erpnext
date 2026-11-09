@@ -103,7 +103,39 @@ function Get-OrCreatePassword {
   }
   Set-Acl -LiteralPath $credentialFile -AclObject $fileAcl
 
-  return @{ Password = $password; Path = $credentialFile }
+  return @{ Password = $password; Path = $credentialFile; Directory = $credentialDirectory }
+}
+
+function Install-DesktopLauncher([string]$CredentialDirectory) {
+  $launcherPath = Join-Path $CredentialDirectory "Start-AI-ERPNext.bat"
+  $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Start AB ERP AI Demo.lnk"
+  $startCommand = "wsl.exe -d $Distro -u $LinuxUser -- bash -lc `"cd /home/$LinuxUser/$ProjectFolder/frappe-bench && ./start-ai-erpnext.sh`""
+
+  @(
+    "@echo off"
+    "title AB ERP AI Demo"
+    $startCommand
+    "if errorlevel 1 ("
+    "  echo ERPNext could not start. Check the error above."
+    "  pause"
+    ")"
+  ) | Set-Content -LiteralPath $launcherPath -Encoding ASCII
+
+  $shell = New-Object -ComObject WScript.Shell
+  try {
+    $shortcut = $shell.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $launcherPath
+    $shortcut.WorkingDirectory = $CredentialDirectory
+    $shortcut.Description = "Start the AB ERP AI demo and its Ollama model"
+    $shortcut.Save()
+  } finally {
+    if ($shortcut) {
+      [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut)
+    }
+    [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell)
+  }
+
+  return @{ Launcher = $launcherPath; Shortcut = $shortcutPath }
 }
 
 foreach ($value in @($Distro, $LinuxUser, $ProjectFolder, $FrappeBranch, $ErpnextBranch, $OllamaModel, $SiteName)) {
@@ -220,6 +252,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Step "Starting ERPNext and opening the website"
+$desktopLauncher = Install-DesktopLauncher $credentials.Directory
 $startCommand = "`"cd /home/$LinuxUser/$ProjectFolder/frappe-bench && ./start-ai-erpnext.sh`""
 $startArguments = "-d $Distro -u $LinuxUser -- bash -lc $startCommand"
 Start-Process -FilePath "wsl.exe" -ArgumentList $startArguments
@@ -232,4 +265,5 @@ Write-Host "Website: http://$SiteName`:8000"
 Write-Host "Login: Administrator"
 Write-Host "Demo password for Linux, MariaDB root, and ERPNext Administrator: 786786" -ForegroundColor Yellow
 Write-Host "Credentials are saved here: $($credentials.Path)"
+Write-Host "After a Windows restart, double-click this Desktop shortcut to run it again: $($desktopLauncher.Shortcut)" -ForegroundColor Green
 Write-Host "This password is for disposable demos only. The first model load can take a few minutes."
