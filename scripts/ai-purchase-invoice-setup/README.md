@@ -64,7 +64,7 @@ source.
 
 ## Start the application and model
 
-The installer creates a **Start AB ERP AI Demo** shortcut on the Windows Desktop.
+The installer creates a **Start AB ERP** shortcut on the Windows Desktop.
 After restarting the laptop, double-click that shortcut to start Ollama and ERPNext
 again. Keep its terminal window open while using the app; closing it or pressing
 Ctrl+C stops Bench. The app does not automatically start at Windows sign-in, so it

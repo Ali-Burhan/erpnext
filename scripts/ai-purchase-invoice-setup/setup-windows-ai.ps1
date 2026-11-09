@@ -108,12 +108,12 @@ function Get-OrCreatePassword {
 
 function Install-DesktopLauncher([string]$CredentialDirectory) {
   $launcherPath = Join-Path $CredentialDirectory "Start-AI-ERPNext.bat"
-  $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Start AB ERP AI Demo.lnk"
+  $shortcutPath = Join-Path ([Environment]::GetFolderPath("Desktop")) "Start AB ERP.lnk"
   $startCommand = "wsl.exe -d $Distro -u $LinuxUser -- bash -lc `"cd /home/$LinuxUser/$ProjectFolder/frappe-bench && ./start-ai-erpnext.sh`""
 
   @(
     "@echo off"
-    "title AB ERP AI Demo"
+    "title AB ERP"
     $startCommand
     "if errorlevel 1 ("
     "  echo ERPNext could not start. Check the error above."
@@ -126,7 +126,7 @@ function Install-DesktopLauncher([string]$CredentialDirectory) {
     $shortcut = $shell.CreateShortcut($shortcutPath)
     $shortcut.TargetPath = $launcherPath
     $shortcut.WorkingDirectory = $CredentialDirectory
-    $shortcut.Description = "Start the AB ERP AI demo and its Ollama model"
+    $shortcut.Description = "Start AB ERP and its Ollama model"
     $shortcut.Save()
   } finally {
     if ($shortcut) {
@@ -265,5 +265,5 @@ Write-Host "Website: http://$SiteName`:8000"
 Write-Host "Login: Administrator"
 Write-Host "Demo password for Linux, MariaDB root, and ERPNext Administrator: 786786" -ForegroundColor Yellow
 Write-Host "Credentials are saved here: $($credentials.Path)"
-Write-Host "After a Windows restart, double-click this Desktop shortcut to run it again: $($desktopLauncher.Shortcut)" -ForegroundColor Green
+Write-Host "After a Windows restart, double-click the Start AB ERP shortcut on the Desktop to run it again." -ForegroundColor Green
 Write-Host "This password is for disposable demos only. The first model load can take a few minutes."
