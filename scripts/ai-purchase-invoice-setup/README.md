@@ -42,6 +42,9 @@ operating-system steps cannot be skipped by an application script. The first ins
 downloads several gigabytes and can take a long time; keep the computer plugged in
 and leave the installer window open.
 
+No separate Git clone of Frappe or ERPNext is needed: the installer fetches those
+repositories and the configured branches into WSL automatically.
+
 For this demo installer, `786786` is used for the Linux account, MariaDB root, and
 ERPNext Administrator. The password is saved in
 `%LOCALAPPDATA%\AI-ERPNext\credentials.txt`. This password is intentionally weak:
@@ -50,6 +53,12 @@ instance.
 
 The installer also installs Tesseract for scanned invoice OCR, configures Ollama for
 the site, migrates the database, and builds ERPNext assets.
+
+The batch launcher runs PowerShell with a process-only execution-policy bypass, so
+the user does not need to change their PowerShell policy. Windows administrator
+approval may still be required for WSL. If Windows SmartScreen warns about an
+unrecognized download, only proceed if the folder came from the expected trusted
+source.
 
 ## Start the application and model
 
