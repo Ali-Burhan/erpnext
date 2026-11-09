@@ -41,6 +41,8 @@ request administrator approval when enabling WSL, and may require a restart. Tho
 operating-system steps cannot be skipped by an application script. The first install
 downloads several gigabytes and can take a long time; keep the computer plugged in
 and leave the installer window open.
+An existing Ubuntu distro already on WSL2 is reused without attempting a redundant
+conversion; a WSL1 distro is converted to WSL2.
 
 No separate Git clone of Frappe or ERPNext is needed: the installer fetches those
 repositories and the configured branches into WSL automatically.

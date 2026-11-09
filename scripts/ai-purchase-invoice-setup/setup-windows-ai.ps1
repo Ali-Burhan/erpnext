@@ -36,6 +36,27 @@ function Get-WslDistros {
   }
 }
 
+function Get-WslDistroVersion([string]$DistroName) {
+  $previous = [Console]::OutputEncoding
+  try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
+    $rows = @(wsl.exe --list --verbose 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+      return $null
+    }
+
+    foreach ($row in $rows) {
+      $line = ($row -replace "`0", "").Trim()
+      if ($line -match "^\*?\s*$([regex]::Escape($DistroName))\s+\S+\s+([12])$") {
+        return [int]$Matches[1]
+      }
+    }
+    return $null
+  } finally {
+    [Console]::OutputEncoding = $previous
+  }
+}
+
 function ConvertTo-Base64([string]$Value) {
   return [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($Value))
 }
@@ -129,12 +150,21 @@ if ($distroList -notcontains $Distro) {
   }
 }
 
-Step "Preparing Ubuntu and creating the installer-managed Linux account"
-wsl.exe --set-version $Distro 2
-if ($LASTEXITCODE -ne 0) {
-  Fail "Could not enable WSL2 for $Distro. Run 'wsl --update', check that virtualization is enabled, and retry."
+Step "Checking the WSL version for $Distro"
+$distroVersion = Get-WslDistroVersion $Distro
+if ($null -eq $distroVersion) {
+  Fail "Could not find $Distro in WSL. If Ubuntu installation requires a restart, restart Windows and run this installer again."
+}
+if ($distroVersion -eq 1) {
+  wsl.exe --set-version $Distro 2
+  if ($LASTEXITCODE -ne 0) {
+    Fail "Could not convert $Distro to WSL2. Run 'wsl --update', check that virtualization is enabled, and retry."
+  }
+} else {
+  Write-Host "$Distro is already running on WSL2; skipping conversion."
 }
 
+Step "Creating the installer-managed Linux account"
 # Starting the distro as root avoids Ubuntu's interactive first-user wizard.
 wsl.exe -d $Distro -u root -- true
 if ($LASTEXITCODE -ne 0) {
