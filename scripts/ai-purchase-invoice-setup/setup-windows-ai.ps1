@@ -43,25 +43,7 @@ function ConvertTo-Base64([string]$Value) {
 function Get-OrCreatePassword {
   $credentialDirectory = Join-Path $env:LOCALAPPDATA "AI-ERPNext"
   $credentialFile = Join-Path $credentialDirectory "credentials.txt"
-  $password = $null
-  if (Test-Path -LiteralPath $credentialFile) {
-    $match = Select-String -Path $credentialFile -Pattern '^Password: ([a-f0-9]{64})$' | Select-Object -First 1
-    if ($match) {
-      $password = $match.Matches[0].Groups[1].Value
-    }
-  }
-
-  if (-not $password) {
-    New-Item -ItemType Directory -Path $credentialDirectory -Force | Out-Null
-    $bytes = New-Object byte[] 32
-    $generator = [Security.Cryptography.RandomNumberGenerator]::Create()
-    try {
-      $generator.GetBytes($bytes)
-    } finally {
-      $generator.Dispose()
-    }
-    $password = -join ($bytes | ForEach-Object { $_.ToString("x2") })
-  }
+  $password = "786786"
 
   $identity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
   $acl = New-Object Security.AccessControl.DirectorySecurity
@@ -79,17 +61,14 @@ function Get-OrCreatePassword {
   New-Item -ItemType Directory -Path $credentialDirectory -Force | Out-Null
   Set-Acl -LiteralPath $credentialDirectory -AclObject $acl
 
-  if (-not (Test-Path -LiteralPath $credentialFile) -or -not $match) {
-    @(
-      "ERPNext local development credentials"
-      "Site: http://$SiteName`:8000"
-      "Linux user: $LinuxUser"
-      "Password: $password"
-      ""
-      "The same generated password is used for the Linux user, MariaDB root, and ERPNext Administrator."
-      "This file is restricted to your Windows account and local administrators. Do not share it."
-    ) | Set-Content -LiteralPath $credentialFile -Encoding UTF8
-  }
+  @(
+    "ERPNext demo credentials - do not use outside a disposable demo environment"
+    "Site: http://$SiteName`:8000"
+    "Linux user: $LinuxUser"
+    "Password: $password"
+    ""
+    "The same fixed demo password is used for the Linux user, MariaDB root, and ERPNext Administrator."
+  ) | Set-Content -LiteralPath $credentialFile -Encoding UTF8
 
   $fileAcl = New-Object Security.AccessControl.FileSecurity
   $fileAcl.SetAccessRuleProtection($true, $false)
@@ -207,7 +186,7 @@ $encodedPassword = ConvertTo-Base64 $password
 $setupCommand = "trap 'sudo rm -f /etc/sudoers.d/99-ai-erpnext-setup' EXIT; cd /home/$LinuxUser/$ProjectFolder; export FRAPPE_BRANCH='$FrappeBranch' ERPNEXT_BRANCH='$ErpnextBranch' OLLAMA_MODEL='$OllamaModel' SITE_NAME='$SiteName'; export DB_ROOT_PW=`$(printf '%s' '$encodedPassword' | base64 -d) ADMIN_PW=`$(printf '%s' '$encodedPassword' | base64 -d); ./setup-frappe.sh"
 wsl.exe -d $Distro -u $LinuxUser -- bash -lc $setupCommand
 if ($LASTEXITCODE -ne 0) {
-  Fail "ERPNext/Ollama setup reported an error. Re-run this installer; the generated password remains at $($credentials.Path)."
+  Fail "ERPNext/Ollama setup reported an error. Re-run this installer; the demo password is 786786."
 }
 
 Step "Starting ERPNext and opening the website"
@@ -221,5 +200,6 @@ Write-Host ""
 Write-Host "Setup finished. ERPNext is starting in its own terminal window." -ForegroundColor Green
 Write-Host "Website: http://$SiteName`:8000"
 Write-Host "Login: Administrator"
-Write-Host "Your generated password is saved here: $($credentials.Path)" -ForegroundColor Yellow
-Write-Host "Keep that file private. The first model load can take a few minutes."
+Write-Host "Demo password for Linux, MariaDB root, and ERPNext Administrator: 786786" -ForegroundColor Yellow
+Write-Host "Credentials are saved here: $($credentials.Path)"
+Write-Host "This password is for disposable demos only. The first model load can take a few minutes."

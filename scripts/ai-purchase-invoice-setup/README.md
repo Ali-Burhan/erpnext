@@ -42,11 +42,11 @@ operating-system steps cannot be skipped by an application script. The first ins
 downloads several gigabytes and can take a long time; keep the computer plugged in
 and leave the installer window open.
 
-It generates one strong random password and uses it for the Linux account, MariaDB
-root, and ERPNext Administrator. The password is saved in
-`%LOCALAPPDATA%\AI-ERPNext\credentials.txt`, with access limited to your Windows
-account and local administrators. Do not share that file. The installer intentionally
-does not use a fixed, easily guessed password.
+For this demo installer, `786786` is used for the Linux account, MariaDB root, and
+ERPNext Administrator. The password is saved in
+`%LOCALAPPDATA%\AI-ERPNext\credentials.txt`. This password is intentionally weak:
+use this only for a disposable local demo, never a production or internet-exposed
+instance.
 
 The installer also installs Tesseract for scanned invoice OCR, configures Ollama for
 the site, migrates the database, and builds ERPNext assets.
